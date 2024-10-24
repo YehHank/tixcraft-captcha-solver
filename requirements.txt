@@ -1,0 +1,7 @@
+tensorflow
+Keras
+h5py
+Pillow
+numpy
+flask
+flask_cors
