@@ -5,49 +5,54 @@ from PIL import Image
 import numpy as np
 import csv
 
+# 常量定義
+IMAGE_HEIGHT = 100
+IMAGE_WIDTH = 120
+DROPOUT_RATE = 0.3
+BATCH_SIZE = 64
+EPOCHS = 100
 LETTERSTR = "abcdefghjklmnopqrstuvwxyz"
-
 
 def toonehot(text):
     labellist = []
     for letter in text:
-        onehot = [0 for _ in range(34)]
+        onehot = [0] * len(LETTERSTR)
         num = LETTERSTR.find(letter)
-        onehot[num] = 1
+        if num != -1:
+            onehot[num] = 1
         labellist.append(onehot)
     return labellist
 
-
 # Create CNN Model
 print("Creating CNN model...")
-input = Input((100, 120, 3))
+input = Input((IMAGE_HEIGHT, IMAGE_WIDTH, 3))
 out = input
 out = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(out)
 out = Conv2D(filters=32, kernel_size=(3, 3), activation='relu')(out)
 out = BatchNormalization()(out)
 out = MaxPooling2D(pool_size=(2, 2))(out)
-out = Dropout(0.3)(out)
+out = Dropout(DROPOUT_RATE)(out)
 out = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation='relu')(out)
 out = Conv2D(filters=64, kernel_size=(3, 3), activation='relu')(out)
 out = BatchNormalization()(out)
 out = MaxPooling2D(pool_size=(2, 2))(out)
-out = Dropout(0.3)(out)
+out = Dropout(DROPOUT_RATE)(out)
 out = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation='relu')(out)
 out = Conv2D(filters=128, kernel_size=(3, 3), activation='relu')(out)
 out = BatchNormalization()(out)
 out = MaxPooling2D(pool_size=(2, 2))(out)
-out = Dropout(0.3)(out)
+out = Dropout(DROPOUT_RATE)(out)
 out = Conv2D(filters=256, kernel_size=(3, 3), activation='relu')(out)
 out = BatchNormalization()(out)
 out = MaxPooling2D(pool_size=(2, 2))(out)
 out = Flatten()(out)
-out = Dropout(0.3)(out)
-out = [Dense(34, name='digit1', activation='softmax')(out),\
-    Dense(34, name='digit2', activation='softmax')(out),\
-    Dense(34, name='digit3', activation='softmax')(out),\
-    Dense(34, name='digit4', activation='softmax')(out)]
+out = Dropout(DROPOUT_RATE)(out)
+out = [Dense(len(LETTERSTR), name='digit1', activation='softmax')(out),\
+    Dense(len(LETTERSTR), name='digit2', activation='softmax')(out),\
+    Dense(len(LETTERSTR), name='digit3', activation='softmax')(out),\
+    Dense(len(LETTERSTR), name='digit4', activation='softmax')(out)]
 model = Model(inputs=input, outputs=out)
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy','accuracy','accuracy','accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'] * 4)
 model.summary()
 
 print("Reading training data...")
@@ -77,6 +82,6 @@ print("Shape of validation data:", vali_data.shape)
 filepath="./data/model/imitate_4_model.keras"
 checkpoint = ModelCheckpoint(filepath, monitor='val_digit4_accuracy', verbose=1, save_best_only=True, mode='max')
 earlystop = EarlyStopping(monitor='val_digit4_accuracy', patience=5, verbose=1, mode='max')
-tensorBoard = TensorBoard(log_dir = "./logs", histogram_freq = 1)
+tensorBoard = TensorBoard(log_dir="./logs", histogram_freq=1)
 callbacks_list = [checkpoint, earlystop, tensorBoard]
-model.fit(train_data, train_label, batch_size=64, epochs=100, verbose=2, validation_data=(vali_data, vali_label), callbacks=callbacks_list)
+model.fit(train_data, train_label, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=2, validation_data=(vali_data, vali_label), callbacks=callbacks_list)
