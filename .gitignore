@@ -163,3 +163,4 @@ cython_debug/
 
 #程式產出
 data/
+logs/
