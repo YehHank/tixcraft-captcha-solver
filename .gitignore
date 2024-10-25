@@ -162,5 +162,7 @@ cython_debug/
 #.idea/
 
 #程式產出
-data/
+data/4_imitate_train_set
+data/4_imitate_vali_set
+data/manual_label
 logs/
