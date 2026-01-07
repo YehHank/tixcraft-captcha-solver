@@ -2,8 +2,20 @@ from PIL import Image, ImageDraw, ImageFont
 from random import randint
 import os
 import csv
-FONTPATH = ["./data/font/SpicyRice-Regular.ttf"]
+from pathlib import Path
+
+FONT_DIR = Path("./data/font")
 LETTERSTR = "abcdefghjklmnopqrstuvwxyz"
+
+
+def _find_fonts(font_dir: Path) -> list[Path]:
+    fonts: list[Path] = []
+    if font_dir.exists():
+        for p in font_dir.rglob("*"):
+            if p.is_file() and p.suffix.lower() in (".ttf", ".otf"):
+                fonts.append(p)
+    fonts.sort()
+    return fonts
 
 
 class captchatext:
@@ -40,6 +52,11 @@ class captchatext:
 def generate(GENNUM, SAVEPATH, filename="train"):
     # Ensure the directory exists, if not create it
     os.makedirs(SAVEPATH, exist_ok=True)
+    fonts = _find_fonts(FONT_DIR)
+    if not fonts:
+        raise RuntimeError(
+            "No font files found under ./data/font. Please add at least one .ttf or .otf font."
+        )
     # Open the files
     captchacsv = open(SAVEPATH + "captcha_{:s}.csv".format(filename), 'w', encoding='utf8', newline='')
     lencsv = open(SAVEPATH + "len_{:s}.csv".format(filename), 'w', encoding='utf8', newline='')
@@ -50,7 +67,8 @@ def generate(GENNUM, SAVEPATH, filename="train"):
         captchalen = 4
         offset = 0
         captcha = Image.new('RGBA', (120, 100), (2, 108, 223, 0))
-        font = ImageFont.truetype(FONTPATH[0], randint(400,600))
+        font_path = str(fonts[randint(0, len(fonts) - 1)])
+        font = ImageFont.truetype(font_path, randint(400, 600))
         for i in range(captchalen):
             newtext = captchatext(i, offset, captchalen)
             newtext.draw(image=captcha ,font=font)
@@ -69,7 +87,6 @@ def generate(GENNUM, SAVEPATH, filename="train"):
 
 
 if __name__ == "__main__":
-    generate(100, "./data/4_imitate_train_set/", filename="train")
-    generate(100, "./data/4_imitate_vali_set/", filename="vali")
+    generate(5000, "./data/4_imitate_train_set/", filename="train")
+    generate(5000, "./data/4_imitate_vali_set/", filename="vali")
     generate(100, "./data/manual_label/", filename="test")
-
