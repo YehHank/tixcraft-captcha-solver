@@ -166,3 +166,11 @@ data/4_imitate_train_set
 data/4_imitate_vali_set
 data/manual_label
 logs/
+
+# Generated / large binary assets
+data/model/*.pt
+data/model/*.pth
+data/model/*.keras
+data/model/*.h5
+data/font/*.ttf
+data/font/*.otf
