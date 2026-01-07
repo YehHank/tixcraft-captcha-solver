@@ -14,6 +14,16 @@
 pip install -r requirements.txt
 ```
 
+建議使用虛擬環境（本專案預設使用 `.venv`）。
+
+Windows PowerShell：
+
+```powershell
+python -m venv venv
+./venv/Scripts/Activate.ps1
+pip install -r requirements.txt
+```
+
 ## 使用方法
 1. 克隆此專案到本地端：
     ```bash
@@ -28,21 +38,24 @@ pip install -r requirements.txt
     ```bash
     python captcha_gen.py
     ```
-4. 訓練模型
-    您可以使用 train_cnn_imitate_4.py 來訓練模型。
+4. 訓練模型（PyTorch）
+    使用 train_torch.py 來訓練模型（會自動偵測 CUDA，無則回退 CPU）。
     ```bash
-    python train_cnn_imitate_4.py
+    python train_torch.py
     ```
-5. 測試模型
-    您可以使用 demo_cnn.py 來測試訓練好的模型。
+5. 測試模型（PyTorch）
+    使用 demo_torch.py 來測試訓練好的模型。
     ```bash
-    python demo_cnn.py
+    python demo_torch.py
     ```
-6. 啟用服務
-    是一個使用 Flask 框架構建的簡單 Web 服務，該服務用於處理基於 Base64 編碼的圖像，並使用預訓練的 Keras 模型進行預測。
+6. 啟用服務（PyTorch）
+    使用 Flask 建立簡單 Web 服務，處理 Base64 圖像並回傳預測結果。
     ```bash
-    python service_base64.py
+    python service_torch_base64.py
     ```
+
+7. （舊版）Keras/TensorFlow 腳本
+    舊版的 Keras/TensorFlow 腳本已在 PyTorch 遷移時移除；如需參考可從 git history 取得。
 
 7. 日誌
     訓練過程中的日誌數據將會存儲在 logs/ 目錄中，您可以使用 TensorBoard 來可視化這些數據。

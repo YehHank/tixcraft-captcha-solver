@@ -1,7 +1,12 @@
-tensorflow
-Keras
-h5py
-Pillow
-numpy
-flask
-flask_cors
+# Default packages come from PyPI; PyTorch CUDA 13.0 wheels come from the extra index.
+--index-url https://pypi.org/simple
+--extra-index-url https://download.pytorch.org/whl/cu130
+
+torch>=2.2
+torchvision>=0.17
+
+numpy>=1.26
+Pillow>=10
+
+flask>=3
+flask_cors>=4
