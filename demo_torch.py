@@ -24,7 +24,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
 
     ckpt = torch.load(args.ckpt, map_location=device)
     config = CaptchaConfig(**ckpt.get("config", {}))

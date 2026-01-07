@@ -1,61 +1,73 @@
 # tixcraft-captcha-solver
 
-## 介紹
-這個專案旨在使用卷積神經網路（CNN）來解決 Tixcraft 的驗證碼問題。
+使用 PyTorch 訓練/推論一個多頭 CNN（每個字元一個 head），用來辨識 Tixcraft 類型的 4 碼字母驗證碼。
 
-## 功能
-- 自動識別並解決驗證碼
-- 支援多種驗證碼類型
+Repo：<https://github.com/YehHank/tixcraft-captcha-solver>
 
-## 安裝
-請確保您已經安裝了所需的 Python 套件。您可以使用以下命令來安裝這些套件：
+## 特色
+- PyTorch 訓練腳本（自動偵測 CUDA，無則回退 CPU）
+- 評估腳本（輸出 full-string accuracy 與每位數字元 accuracy）
+- Flask 推論服務：Base64 圖片 -> 預測文字
+- 資料集以 CSV（image_id,label）管理，搭配資料夾的 PNG 圖片
 
-```bash
-pip install -r requirements.txt
-```
+## 環境需求
+- Python 3.10+（建議 3.10/3.11）
+- （選用）NVIDIA GPU：安裝對應驅動後，依 `requirements.txt` 會安裝 PyTorch CUDA wheels
+  - 本專案目前使用 `cu130` 來源（見 `requirements.txt`）
+  - 沒有 GPU 也能跑：程式會自動使用 CPU（只是比較慢）
 
-建議使用虛擬環境（本專案預設使用 `.venv`）。
-
-Windows PowerShell：
+## 安裝（Windows PowerShell）
+建議使用虛擬環境（此專案範例使用 `venv`）。
 
 ```powershell
+cd g:\Projects\tixcraft-captcha-solver
+
 python -m venv venv
 ./venv/Scripts/Activate.ps1
+
+python -m pip install -U pip
 pip install -r requirements.txt
 ```
 
-## 使用方法
-1. 克隆此專案到本地端：
-    ```bash
-    git clone https://github.com/yourusername/tixcraft-captcha-solver.git
-    ```
-2. 進入專案目錄：
-    ```bash
-    cd tixcraft-captcha-solver
-    ```
-3. 生成驗證碼
-    您可以使用 captcha_gen.py 來生成驗證碼圖像。
-    ```bash
-    python captcha_gen.py
-    ```
-4. 訓練模型（PyTorch）
-    使用 train_torch.py 來訓練模型（會自動偵測 CUDA，無則回退 CPU）。
-    ```bash
-    python train_torch.py
-    ```
-5. 測試模型（PyTorch）
-    使用 demo_torch.py 來測試訓練好的模型。
-    ```bash
-    python demo_torch.py
-    ```
-6. 啟用服務（PyTorch）
-    使用 Flask 建立簡單 Web 服務，處理 Base64 圖像並回傳預測結果。
-    ```bash
-    python service_torch_base64.py
-    ```
+## 產生訓練資料（captcha_gen）
+在生成圖片前，請先放入至少一個字型檔到 `./data/font`（`.ttf` / `.otf`）。
 
-7. （舊版）Keras/TensorFlow 腳本
-    舊版的 Keras/TensorFlow 腳本已在 PyTorch 遷移時移除；如需參考可從 git history 取得。
+```bash
+python captcha_gen.py
+```
 
-7. 日誌
-    訓練過程中的日誌數據將會存儲在 logs/ 目錄中，您可以使用 TensorBoard 來可視化這些數據。
+預設會在以下資料夾產生：
+- `./data/4_imitate_train_set/`
+- `./data/4_imitate_vali_set/`
+- `./data/manual_label/`
+
+注意：字型與模型等大型二進位檔通常不會提交到 git（見 `.gitignore`）。
+
+## 訓練（train_torch）
+```bash
+python train_torch.py --epochs 50 --batch-size 32 --lr 0.001 --out ./data/model/imitate_4_model_torch.pt
+```
+
+訓練過程會印出：
+- `Using device: cuda` 或 `Using device: cpu`
+- 每個 epoch 的 train/val loss 與 accuracy
+
+## 評估（demo_torch）
+```bash
+python demo_torch.py --ckpt ./data/model/imitate_4_model_torch.pt
+```
+
+## 推論服務（service_torch_base64）
+啟動：
+
+```bash
+python service_torch_base64.py --ckpt ./data/model/imitate_4_model_torch.pt --host 0.0.0.0 --port 8888
+```
+
+API：
+- `POST /predict`
+- Body（JSON）：`{"image": "<base64 or data-url>"}`
+- Response：`{"prediction": "abcd", "config": {...}}`
+
+## 備註
+- 舊版 Keras/TensorFlow 腳本已在 PyTorch 遷移後移除；如需參考可從 git history 取得。

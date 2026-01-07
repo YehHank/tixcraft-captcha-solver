@@ -29,15 +29,15 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def load_model(ckpt_path: str) -> tuple[CaptchaCNN, CaptchaConfig]:
-    device = torch.device("cpu")
+def load_model(ckpt_path: str) -> tuple[CaptchaCNN, CaptchaConfig, torch.device]:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ckpt = torch.load(ckpt_path, map_location=device)
     config = CaptchaConfig(**ckpt.get("config", {}))
     model = CaptchaCNN(config)
     model.load_state_dict(ckpt["model_state_dict"])
     model.to(device)
     model.eval()
-    return model, config
+    return model, config, device
 
 
 def decode_base64_image(data_url_or_b64: str) -> Image.Image:
@@ -48,7 +48,7 @@ def decode_base64_image(data_url_or_b64: str) -> Image.Image:
     return Image.open(io.BytesIO(image_bytes))
 
 
-def create_app(model: CaptchaCNN, config: CaptchaConfig, max_bytes: int) -> Flask:
+def create_app(model: CaptchaCNN, config: CaptchaConfig, device: torch.device, max_bytes: int) -> Flask:
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = max_bytes
     CORS(app)
@@ -68,7 +68,7 @@ def create_app(model: CaptchaCNN, config: CaptchaConfig, max_bytes: int) -> Flas
             return jsonify({"error": "Invalid base64 image"}), 400
 
         try:
-            x = pil_to_tensor_rgb(img, preprocess).unsqueeze(0)
+            x = pil_to_tensor_rgb(img, preprocess).unsqueeze(0).to(device)
             with torch.inference_mode():
                 pred = model.predict_text(x)[0]
             return jsonify(
@@ -85,8 +85,9 @@ def create_app(model: CaptchaCNN, config: CaptchaConfig, max_bytes: int) -> Flas
 
 def main() -> None:
     args = parse_args()
-    model, config = load_model(args.ckpt)
-    app = create_app(model, config, max_bytes=args.max_bytes)
+    model, config, device = load_model(args.ckpt)
+    print(f"Using device: {device}")
+    app = create_app(model, config, device=device, max_bytes=args.max_bytes)
     app.run(host=args.host, port=args.port)
 
 
